@@ -288,8 +288,8 @@ public class GameScreen implements Screen {
         if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.SPACE) && attackCooldown <= 0f) {
             float attackW = 16;
             float attackH = 16;
-            float attackX = playerX;
-            float attackY = playerY;
+            float attackX = playerX + (PLAYER_SIZE - attackW) / 2f;
+            float attackY = playerY + (PLAYER_SIZE - attackH) / 2f;
 
             double rad = Math.toRadians(playerFacingAngle);
             float offsetX = (float) (Math.cos(rad) * PLAYER_SIZE);
