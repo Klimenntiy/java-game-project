@@ -58,6 +58,11 @@ public class GameScreen implements Screen {
     private static final int PORTAL_SIZE = 20;
     private boolean levelCompleted = false;
 
+    private boolean[][] explored;
+    private boolean portalDiscovered = false;
+
+
+
 
 
     public GameScreen(MainGame game) {
@@ -68,6 +73,8 @@ public class GameScreen implements Screen {
     public void show() {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, VIEW_WIDTH * TILE_SIZE, VIEW_HEIGHT * TILE_SIZE);
+
+        explored = new boolean[DungeonGenerator.WIDTH][DungeonGenerator.HEIGHT];
 
         shapeRenderer = new ShapeRenderer();
         batch = new SpriteBatch();
@@ -126,6 +133,32 @@ public class GameScreen implements Screen {
         }
     }
 
+    private void updateExplored() {
+        int radius = 6;
+        int centerX = (int)(playerX / TILE_SIZE);
+        int centerY = (int)(playerY / TILE_SIZE);
+
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                int x = centerX + dx;
+                int y = centerY + dy;
+                if (x >= 0 && y >= 0 && x < DungeonGenerator.WIDTH && y < DungeonGenerator.HEIGHT) {
+                    explored[x][y] = true;
+
+                    if (!portalDiscovered) {
+                        float px = x * TILE_SIZE;
+                        float py = y * TILE_SIZE;
+                        if (px <= portalX + PORTAL_SIZE && px + TILE_SIZE >= portalX &&
+                            py <= portalY + PORTAL_SIZE && py + TILE_SIZE >= portalY) {
+                            portalDiscovered = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
     private boolean canMoveTo(float x, float y) {
         return isTileEmpty(x, y) &&
             isTileEmpty(x + PLAYER_SIZE - 1, y) &&
@@ -176,7 +209,9 @@ public class GameScreen implements Screen {
     @Override
     public void render(float delta) {
         handleInput(delta);
+        updateExplored();
         updateCameraPosition();
+
 
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -186,11 +221,14 @@ public class GameScreen implements Screen {
 
         for (int x = 0; x < DungeonGenerator.WIDTH; x++) {
             for (int y = 0; y < DungeonGenerator.HEIGHT; y++) {
+                if (!explored[x][y]) continue;
+
                 if (map[x][y] == DungeonGenerator.TILE_WALL) {
                     shapeRenderer.setColor(0.4f, 0.4f, 0.4f, 1);
                 } else {
                     shapeRenderer.setColor(0.1f, 0.1f, 0.1f, 1);
                 }
+
                 shapeRenderer.rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
             }
         }
@@ -210,13 +248,20 @@ public class GameScreen implements Screen {
         }
         enemies.removeAll(deadEnemies);
 
-        shapeRenderer.setColor(1, 0, 0, 1);
-        for (Enemy e : enemies) {
-            shapeRenderer.rect(e.x, e.y, Enemy.SIZE, Enemy.SIZE);
+        if (!showFullMap) {
+            shapeRenderer.setColor(1, 0, 0, 1);
+            for (Enemy e : enemies) {
+                shapeRenderer.rect(e.x, e.y, Enemy.SIZE, Enemy.SIZE);
+            }
         }
-
         shapeRenderer.setColor(0, 1, 0, 1);
         shapeRenderer.rect(playerX, playerY, PLAYER_SIZE, PLAYER_SIZE);
+
+        if (!showFullMap || portalDiscovered) {
+            shapeRenderer.setColor(0.3f, 0.3f, 1f, 1f);
+            shapeRenderer.rect(portalX, portalY, PORTAL_SIZE, PORTAL_SIZE);
+        }
+
 
         if (playerDead) {
             shapeRenderer.setColor(1, 0, 0, 1);
@@ -247,9 +292,6 @@ public class GameScreen implements Screen {
             shapeRenderer.rect(attackBoxX, attackBoxY, attackBoxW, attackBoxH);
             showAttackBoxTimer -= delta;
         }
-
-        shapeRenderer.setColor(0.3f, 0.3f, 1f, 1f);
-        shapeRenderer.rect(portalX, portalY, PORTAL_SIZE, PORTAL_SIZE);
 
         shapeRenderer.end();
 
