@@ -77,7 +77,7 @@ public class DungeonGenerator {
         int max = Math.max(x1, x2);
         int halfWidth = tunnelWidth / 2;
 
-        for (int x = min; x <= max; x++) {
+        for (int x = min; x < max; x++) {
             for (int offset = -halfWidth; offset <= halfWidth; offset++) {
                 int y = yCenter + offset;
                 if (y >= 0 && y < HEIGHT) {
@@ -92,7 +92,7 @@ public class DungeonGenerator {
         int max = Math.max(y1, y2);
         int halfWidth = tunnelWidth / 2;
 
-        for (int y = min; y <= max; y++) {
+        for (int y = min; y < max; y++) {
             for (int offset = -halfWidth; offset <= halfWidth; offset++) {
                 int x = xCenter + offset;
                 if (x >= 0 && x < WIDTH) {
@@ -100,6 +100,11 @@ public class DungeonGenerator {
                 }
             }
         }
+    }
+
+    public Room getLastRoom() {
+        if (rooms.isEmpty()) return null;
+        return rooms.get(rooms.size() - 1);
     }
 
 }

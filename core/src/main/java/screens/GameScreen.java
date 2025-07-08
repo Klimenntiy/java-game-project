@@ -52,6 +52,12 @@ public class GameScreen implements Screen {
 
     private boolean playerDead = false;
     private float deathTimer;
+    private float teleportTimer;
+
+    private float portalX, portalY;
+    private static final int PORTAL_SIZE = 20;
+    private boolean levelCompleted = false;
+
 
 
     public GameScreen(MainGame game) {
@@ -79,6 +85,8 @@ public class GameScreen implements Screen {
 
         spawnEnemies();
 
+        placePortalInLastRoom(dungeon);
+
         updateCameraPosition();
     }
 
@@ -105,6 +113,16 @@ public class GameScreen implements Screen {
                 enemies.add(new Enemy(ex, ey));
                 spawned++;
             }
+        }
+    }
+
+    private void placePortalInLastRoom(DungeonGenerator dungeon) {
+        maps.Room lastRoom = dungeon.getLastRoom();
+        if (lastRoom != null) {
+            int x = lastRoom.centerX();
+            int y = lastRoom.centerY();
+            portalX = x * TILE_SIZE + (TILE_SIZE - PORTAL_SIZE) / 2f;
+            portalY = y * TILE_SIZE + (TILE_SIZE - PORTAL_SIZE) / 2f;
         }
     }
 
@@ -216,12 +234,23 @@ public class GameScreen implements Screen {
             );
         }
 
+        if (!playerDead && !levelCompleted) {
+            if (playerX + PLAYER_SIZE > portalX && playerX < portalX + PORTAL_SIZE &&
+                playerY + PLAYER_SIZE > portalY && playerY < portalY + PORTAL_SIZE) {
+                levelCompleted = true;
+                teleportTimer = 0.01f;
+            }
+        }
 
         if (showAttackBoxTimer > 0f) {
             shapeRenderer.setColor(1, 1, 0, 1);
             shapeRenderer.rect(attackBoxX, attackBoxY, attackBoxW, attackBoxH);
             showAttackBoxTimer -= delta;
         }
+
+        shapeRenderer.setColor(0.3f, 0.3f, 1f, 1f);
+        shapeRenderer.rect(portalX, portalY, PORTAL_SIZE, PORTAL_SIZE);
+
         shapeRenderer.end();
 
         if (!showFullMap) {
@@ -313,6 +342,14 @@ public class GameScreen implements Screen {
                 }
             }
             enemies.removeAll(deadEnemies);
+        }
+
+        if (levelCompleted) {
+            teleportTimer -= delta;
+            if (teleportTimer <= 0) {
+                game.setScreen(new MenuScreen(game));
+            }
+            return;
         }
     }
 
